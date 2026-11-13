@@ -6,8 +6,8 @@ La GEM-W09 con HarmonyOS 4.3.0 permite ejecutar la APK Android actual. La varian
 
 En Windows, `scripts/build_android.ps1 -Check` construye y comprueba las dos variantes:
 
-- `dist/ClipboardAI-Android-0.3.6-debug.apk` para el teléfono Android. Mantiene `org.clipboardai.app` y actualiza la instalación existente.
-- `dist/ClipboardAI-Harmony-0.3.6-debug.apk` para la MatePad. Usa `org.clipboardai.app.harmony` y se instala por separado.
+- `dist/ClipboardAI-Android-0.3.9-debug.apk` para el teléfono Android. Mantiene `org.clipboardai.app` y actualiza la instalación existente.
+- `dist/ClipboardAI-Harmony-0.3.9-debug.apk` para la MatePad. Usa `org.clipboardai.app.harmony` y se instala por separado.
 
 ## Primera conexión de la variante Harmony
 
@@ -22,7 +22,7 @@ Esta variante es para la GEM-W09 con la capa compatible con APK de HarmonyOS 4.3
 
 ## Recortes y SuperHub
 
-La ruta principal para Take Snippet es **Compartir → Clipboard AI · MatePad**. La aplicación recibe la imagen temporal aunque no se guarde en Galería; la copia entra en Imágenes del dock y, si Imagen → Markdown está activado, el cerebro genera texto y lo devuelve al portapapeles al llegar en vivo.
+La ruta principal para Take Snippet es **Compartir → Clipboard AI · MatePad**. La aplicación recibe la imagen temporal aunque no se guarde en Galería; la copia entra en Imágenes del dock y, si Imagen → Texto está activado, el cerebro genera texto y lo devuelve al portapapeles al llegar en vivo.
 
 También puedes abrir Clipboard AI junto a SuperHub y arrastrar imágenes o texto a la ventana de Clipboard AI. El soporte de arrastre depende de que SuperHub entregue una URI o texto accesible a esta APK; hay que comprobarlo en la GEM-W09. Para sacar un texto del dock hacia otras apps, usa **Compartir** en la tarjeta de texto o mantén pulsada la tarjeta para arrastrarla. Que SuperHub acepte ese gesto también requiere una prueba en el equipo real.
 

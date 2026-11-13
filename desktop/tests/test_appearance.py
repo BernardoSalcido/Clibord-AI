@@ -1,4 +1,4 @@
-from clipboard_ai.appearance import LABELS, PAPER, stylesheet
+from clipboard_ai.appearance import AI_SETTINGS, LABELS, PAPER, stylesheet
 
 
 def test_paper_themes_and_two_locales_have_matching_controls():
@@ -9,6 +9,7 @@ def test_paper_themes_and_two_locales_have_matching_controls():
     assert PAPER["night"]["accent"] == "#11b7c5"
     assert set(LABELS) == {"es", "en"}
     assert LABELS["es"].keys() == LABELS["en"].keys()
+    assert AI_SETTINGS["es"].keys() == AI_SETTINGS["en"].keys()
     for name in PAPER:
         css = stylesheet(name)
         assert PAPER[name]["background"] in css

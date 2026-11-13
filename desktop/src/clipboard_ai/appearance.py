@@ -34,7 +34,7 @@ LABELS = {
         "pending": "Pendientes", "texts": "textos", "files": "archivos",
         "settings_title": "Ajustes de Clipboard AI", "local_ai": "IA local · conexión, modelo y prompts",
         "notifications": "Avisar de envíos y recepciones (agrupar avisos seguidos)",
-        "startup": "Iniciar con {system} y abrir el dock", "hotkeys": ("Copiar y enviar", "Mostrar / ocultar dock", "Alternar Ortografía", "Alternar Imagen → Texto", "Alternar Gramática"),
+        "startup": "Iniciar con {system} y abrir el dock", "hotkeys": ("Copiar y enviar", "Mostrar / ocultar dock", "Alternar corrección media", "Alternar Imagen → Texto", "Alternar corrección alta"),
         "hotkey_hint": "Copiar y enviar copia la selección de la aplicación activa, la comparte y usa la acción de IA seleccionada. Atajo inicial: Ctrl+Alt+C. Ctrl+C conserva la copia normal.",
         "paired": "Vinculado", "unpair": "Desvincular",
     },
@@ -62,9 +62,44 @@ LABELS = {
         "pending": "Pending", "texts": "texts", "files": "files",
         "settings_title": "Clipboard AI settings", "local_ai": "Local AI · connection, model and prompts",
         "notifications": "Notify sends and receipts (group consecutive notices)",
-        "startup": "Start with {system} and open the dock", "hotkeys": ("Copy and send", "Show / hide dock", "Toggle spelling", "Toggle Image → Text", "Toggle grammar"),
+        "startup": "Start with {system} and open the dock", "hotkeys": ("Copy and send", "Show / hide dock", "Toggle medium correction", "Toggle Image → Text", "Toggle high correction"),
         "hotkey_hint": "Copy and send copies the selection in the active app, shares it and uses the selected AI action. Default shortcut: Ctrl+Alt+C. Ctrl+C still copies normally.",
         "paired": "Paired", "unpair": "Unpair",
+    },
+}
+
+AI_SETTINGS = {
+    "es": {
+        "title": "IA local · Bionic / LM Studio", "api": "API local", "model": "Modelo",
+        "preload": "Cargar y preparar el modelo al iniciar",
+        "autostart": "Iniciar el servicio local si no responde",
+        "probe": "Probar conexión / buscar modelos", "prepare": "Preparar", "release": "Liberar modelo",
+        "context": "Contexto al cargar", "output": "Límite de salida (incluye thinking)",
+        "image_edge": "Lado máximo de imagen para IA", "original": "Original (sin reducción)",
+        "recommended": "1280 px · recomendado",
+        "tabs": ("Imagen → Texto", "Media · Ortografía", "Alta · Gramática"),
+        "restore": "Restaurar prompts", "save": "Guardar", "cancel": "Cancelar",
+        "checking": "Comprobando API…", "connected": "API conectada. Selecciona el modelo y guarda.",
+        "hint": "Los prompts se envían con cada petición; la app añade los delimitadores automáticamente.\n"
+                "Cada acción es independiente y no acumula conversación. La imagen original se conserva en el dock.\n"
+                "Si la API requiere un token, define CLIPBOARD_AI_API_TOKEN antes de abrir el dock.\n"
+                "Guardar aplica la dirección y el modelo; Preparar usa la configuración ya guardada.",
+    },
+    "en": {
+        "title": "Local AI · Bionic / LM Studio", "api": "Local API", "model": "Model",
+        "preload": "Load and warm up the model at startup",
+        "autostart": "Start the local service if it does not respond",
+        "probe": "Test connection / find models", "prepare": "Prepare", "release": "Unload model",
+        "context": "Context on load", "output": "Output limit (includes thinking)",
+        "image_edge": "Maximum image edge for AI", "original": "Original (no resize)",
+        "recommended": "1280 px · recommended",
+        "tabs": ("Image → Text", "Medium · Spelling", "High · Grammar"),
+        "restore": "Restore prompts", "save": "Save", "cancel": "Cancel",
+        "checking": "Checking API…", "connected": "API connected. Select the model and save.",
+        "hint": "Prompts are sent with each request; the app adds output markers automatically.\n"
+                "Each action is independent and does not build a conversation. The original image stays in the dock.\n"
+                "If the API requires a token, set CLIPBOARD_AI_API_TOKEN before opening the dock.\n"
+                "Save applies the endpoint and model; Prepare uses the saved configuration.",
     },
 }
 

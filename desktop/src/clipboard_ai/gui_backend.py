@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 import shutil
 import threading
+import traceback
 import time
 import uuid
 
@@ -380,7 +381,13 @@ class Backend(QObject):
             with asyncio.Runner(loop_factory=asyncio.SelectorEventLoop if os.name == "nt" else None) as runner:
                 runner.run(self._run())
         except Exception as exc:
-            self.error.emit(f"No se pudo iniciar el dock: {exc}. Si hay una terminal anterior abierta, ciérrala y vuelve a abrir el dock.")
+            try:
+                self.args.data_dir.mkdir(parents=True, exist_ok=True)
+                (self.args.data_dir / "startup-error.log").write_text(
+                    traceback.format_exc(), encoding="utf-8")
+            except OSError:
+                pass
+            self.error.emit(f"No se pudo iniciar el dock: {exc}. Consulta startup-error.log en la carpeta de datos de Clipboard AI.")
         finally:
             self.accepting = False
             self.ai_activity.emit("idle")
@@ -417,6 +424,7 @@ class Backend(QObject):
             for task in tasks:
                 task.add_done_callback(self._watcher_done)
             self.accepting = True
+            (self.args.data_dir / "startup-error.log").unlink(missing_ok=True)
             if self.ai_config is not None:
                 self.ai = LocalAI(self.ai_config, self.ai_state.emit)
                 self.ai_event = asyncio.Event()

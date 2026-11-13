@@ -27,7 +27,7 @@ from .desktop_platform import (WindowsHotkeys, copy_focused_selection, is_copy_h
 from .gui_backend import Backend, QtClipboard
 from .instance import InstanceLock
 from .ai import AIConfig, AIError, PROMPTS
-from .appearance import LABELS, PAPER, stylesheet
+from .appearance import AI_SETTINGS, LABELS, PAPER, stylesheet
 
 
 def warmup_image():
@@ -44,45 +44,46 @@ class AISettingsDialog(QDialog):
     def __init__(self, window):
         super().__init__(window)
         self.window = window
-        self.setWindowTitle("IA local · Bionic / LM Studio"); self.resize(640, 650)
+        self.labels = AI_SETTINGS[window.language]
+        t = self.labels
+        self.setWindowTitle(t["title"]); self.resize(640, 650)
         layout = QVBoxLayout(self); form = QFormLayout()
         config = window.ai_config
         self.endpoint = QLineEdit(config.endpoint)
         self.model = QComboBox(); self.model.setEditable(True); self.model.addItem(config.model)
-        form.addRow("API local", self.endpoint); form.addRow("Modelo", self.model)
+        form.addRow(t["api"], self.endpoint); form.addRow(t["model"], self.model)
         layout.addLayout(form)
-        self.preload = QCheckBox("Cargar y preparar el modelo al iniciar"); self.preload.setChecked(config.preload)
-        self.autostart = QCheckBox("Iniciar el servicio local si no responde"); self.autostart.setChecked(config.autostart)
+        self.preload = QCheckBox(t["preload"]); self.preload.setChecked(config.preload)
+        self.autostart = QCheckBox(t["autostart"]); self.autostart.setChecked(config.autostart)
         layout.addWidget(self.preload); layout.addWidget(self.autostart)
         row = QHBoxLayout()
-        row.addWidget(button("Probar conexión / buscar modelos", self.probe))
-        row.addWidget(button("Preparar", lambda: window.backend.request("ai_prepare")))
-        row.addWidget(button("Liberar modelo", lambda: window.backend.request("ai_release")))
+        row.addWidget(button(t["probe"], self.probe))
+        row.addWidget(button(t["prepare"], lambda: window.backend.request("ai_prepare")))
+        row.addWidget(button(t["release"], lambda: window.backend.request("ai_release")))
         layout.addLayout(row)
         limits = QFormLayout()
         self.context = QSpinBox(); self.context.setRange(512, 32768); self.context.setValue(config.context)
         self.output = QSpinBox(); self.output.setRange(64, 32768); self.output.setValue(config.max_output)
         self.image_max_edge = QComboBox()
-        for label, edge in (("Original (sin reducción)", 0), ("2048 px", 2048), ("1600 px", 1600),
-                            ("1280 px · recomendado", 1280), ("1024 px", 1024), ("768 px", 768)):
+        for label, edge in ((t["original"], 0), ("2048 px", 2048), ("1600 px", 1600),
+                            (t["recommended"], 1280), ("1024 px", 1024), ("768 px", 768)):
             self.image_max_edge.addItem(label, edge)
         self.image_max_edge.setCurrentIndex(self.image_max_edge.findData(config.image_max_edge))
-        limits.addRow("Contexto al cargar", self.context); limits.addRow("Límite de salida (incluye thinking)", self.output)
-        limits.addRow("Lado máximo de captura para IA", self.image_max_edge)
+        limits.addRow(t["context"], self.context); limits.addRow(t["output"], self.output)
+        limits.addRow(t["image_edge"], self.image_max_edge)
         layout.addLayout(limits)
-        tabs = QTabWidget(); self.editors = {}
-        for key, label in (("image", "Imagen → Markdown"), ("spelling", "Ortografía"), ("grammar", "Gramática")):
-            editor = QPlainTextEdit(config.prompts[key]); self.editors[key] = editor; tabs.addTab(editor, label)
-        layout.addWidget(tabs, 1)
-        layout.addWidget(button("Restaurar prompts", self.restore_prompts))
-        hint = QLabel("Los prompts se envían con cada petición. El programa añade los delimitadores automáticamente.\n"
-                      "Cada acción usa una petición independiente y no acumula conversación. La imagen original se conserva en el dock.\n"
-                      "Si la API requiere un token: define CLIPBOARD_AI_API_TOKEN antes de abrir el dock.\n"
-                      "Guardar aplica la dirección y el modelo; Preparar usa la configuración ya guardada.")
+        self.tabs = QTabWidget(); self.editors = {}
+        for key, label in zip(("image", "spelling", "grammar"), t["tabs"]):
+            editor = QPlainTextEdit(config.prompts[key]); self.editors[key] = editor; self.tabs.addTab(editor, label)
+        layout.addWidget(self.tabs, 1)
+        layout.addWidget(button(t["restore"], self.restore_prompts))
+        hint = QLabel(t["hint"])
         hint.setWordWrap(True); layout.addWidget(hint)
         self.message = QLabel(); self.message.setWordWrap(True); self.message.setTextFormat(Qt.TextFormat.PlainText)
         layout.addWidget(self.message)
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel)
+        buttons.button(QDialogButtonBox.StandardButton.Save).setText(t["save"])
+        buttons.button(QDialogButtonBox.StandardButton.Cancel).setText(t["cancel"])
         buttons.accepted.connect(self.save); buttons.rejected.connect(self.reject); layout.addWidget(buttons)
         window.backend.completed.connect(self.completed)
 
@@ -90,7 +91,7 @@ class AISettingsDialog(QDialog):
         for key, editor in self.editors.items(): editor.setPlainText(PROMPTS[key])
 
     def probe(self):
-        self.message.setText("Comprobando API…")
+        self.message.setText(self.labels["checking"])
         self.window.backend.request("ai_probe", self.endpoint.text().strip())
 
     def completed(self, action, value):
@@ -100,7 +101,7 @@ class AISettingsDialog(QDialog):
         selected = self.model.currentText(); self.model.clear()
         self.model.addItems([model["key"] for model in value["models"] if model.get("type") == "llm" and model.get("capabilities", {}).get("vision")])
         self.model.setCurrentText(selected)
-        self.message.setText("API conectada. Selecciona el modelo y guarda.")
+        self.message.setText(self.labels["connected"])
 
     def save(self):
         from dataclasses import replace
@@ -522,9 +523,9 @@ class DockWindow(QMainWindow):
         scroll.setWidget(action_widget); side_layout.addWidget(scroll)
         self.actions_heading = QLabel("Acciones automáticas")
         action_layout.addWidget(self.actions_heading)
-        self.image_mode = QCheckBox("Imagen → Markdown")
-        self.spelling_mode = QCheckBox("Texto → Ortografía")
-        self.grammar_mode = QCheckBox("Gramática · thinking")
+        self.image_mode = QCheckBox(LABELS[self.language]["image"])
+        self.spelling_mode = QCheckBox(LABELS[self.language]["spelling"])
+        self.grammar_mode = QCheckBox(LABELS[self.language]["grammar"])
         self.image_mode.setChecked(self.ai_config.image)
         self.spelling_mode.setChecked(self.ai_config.text_mode == "spelling")
         self.grammar_mode.setChecked(self.ai_config.text_mode == "grammar")
@@ -799,7 +800,8 @@ class DockWindow(QMainWindow):
             self.add_files(paths)
             if self.ai_config.image:
                 if len(paths) != 1:
-                    self.show_notice("Archivos enviados. Para Imagen → Markdown, copia y envía una imagen a la vez.")
+                    self.show_notice("Files sent. For Image → Text, copy and send one image at a time." if self.language == "en" else
+                                     "Archivos enviados. Para Imagen → Texto, copia y envía una imagen a la vez.")
                     return
                 reader = QImageReader(paths[0])
                 if not reader.canRead():
@@ -1218,7 +1220,8 @@ class DockWindow(QMainWindow):
         if kind == "text":
             self.detail_title.setText("Texto enviado" if row["origin"] == self.state["device"] else "Texto recibido")
             if row.get("ai_action"):
-                self.detail_title.setText({"image": "Imagen → Markdown", "spelling": "Ortografía", "grammar": "Gramática"}.get(row["ai_action"], "Resultado de IA"))
+                names = dict(zip(("image", "spelling", "grammar"), AI_SETTINGS[self.language]["tabs"]))
+                self.detail_title.setText(names.get(row["ai_action"], "AI result" if self.language == "en" else "Resultado de IA"))
                 self.original_button.show()
             self.detail_meta.setText(f"{created} · {len(row['text'])} caracteres · {'Entregado' if row['delivered'] else 'Pendiente'}")
             body = row["text"]; self.copy_button.show()
@@ -1261,11 +1264,13 @@ class DockWindow(QMainWindow):
         source = dict(revision=self.clipboard_bridge.revision(), text="", image=None, manual=True)
         if entry["kind"] == "text":
             if self.ai_config.text_mode == "none":
-                self.show_notice("Activa Ortografía o Gramática para procesar el texto seleccionado."); return
+                self.show_notice("Enable medium or high correction to process the selected text." if self.language == "en" else
+                                 "Activa corrección media o alta para procesar el texto seleccionado."); return
             source["text"] = entry["row"]["text"]
         else:
             if not self.ai_config.image or history_section(entry) != 1:
-                self.show_notice("Activa Imagen → Markdown y selecciona una imagen."); return
+                self.show_notice("Enable Image → Text and select an image." if self.language == "en" else
+                                 "Activa Imagen → Texto y selecciona una imagen."); return
             row = entry["row"]
             is_capture = row["direction"] == "out" and Path(row["path"]).parent.name == "Capturas"
             if row["state"] != "delivered" and not (is_capture and row["state"] in ("pending", "sending")):
@@ -1636,7 +1641,7 @@ class MacCompanionWindow(DockWindow):
         description = QLabel("Estos prompts y modos se sincronizan con el cerebro. La API y el modelo se configuran en el propio cerebro.")
         description.setWordWrap(True); layout.addWidget(description)
         tabs = QTabWidget(); editors = {}
-        for key, label in (("image", "Imagen → Markdown"), ("spelling", "Ortografía"), ("grammar", "Gramática")):
+        for key, label in zip(("image", "spelling", "grammar"), AI_SETTINGS[self.language]["tabs"]):
             editor = QPlainTextEdit(self.ai_config.prompts[key]); editors[key] = editor
             tabs.addTab(editor, label)
         layout.addWidget(tabs)

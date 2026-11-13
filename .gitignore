@@ -2,6 +2,7 @@
 .tools/
 .venv/
 .venv-linux/
+.venv-mac/
 .build-windows/
 .pytest_cache/
 __pycache__/
@@ -20,6 +21,12 @@ dist/
 *.p12
 *.pfx
 *.keystore
+*.jks
+*.p8
 ai.json
 desktop.ini
+desktop.lock
+pairing.html
+*.db
 *.sqlite*
+.DS_Store

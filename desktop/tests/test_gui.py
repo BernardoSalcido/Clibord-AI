@@ -22,7 +22,7 @@ from PySide6.QtGui import QImage, QColor
 from PySide6.QtWidgets import QApplication, QDialog, QDialogButtonBox, QKeySequenceEdit, QMessageBox, QSystemTrayIcon
 from websockets.asyncio.client import connect
 
-from clipboard_ai.gui import DockWindow, PairDialog, serve_activation, socket_name
+from clipboard_ai.gui import AISettingsDialog, DockWindow, PairDialog, serve_activation, socket_name
 from clipboard_ai.gui_backend import Backend, QtClipboard, export_copy
 from clipboard_ai.desktop_platform import is_copy_hotkey, parse_hotkey, startup_command
 from clipboard_ai.instance import InstanceLock
@@ -260,6 +260,23 @@ def test_english_navigation_keeps_ai_mode_and_history(window, tmp_path):
     assert window.sections.tabText(0) == "Texts (1)"
     assert window.correction_level.currentData() == "spelling"
     assert window.correction_level.itemText(1) == "Medium · spelling"
+
+
+@pytest.mark.parametrize("language,tabs,save", [
+    ("es", ("Imagen → Texto", "Media · Ortografía", "Alta · Gramática"), "Guardar"),
+    ("en", ("Image → Text", "Medium · Spelling", "High · Grammar"), "Save"),
+])
+def test_ai_settings_uses_current_language_and_correction_levels(window, language, tabs, save):
+    window.language = language
+    dialog = AISettingsDialog(window)
+    try:
+        assert tuple(dialog.tabs.tabText(i) for i in range(3)) == tabs
+        assert dialog.editors["spelling"].toPlainText() == window.ai_config.prompts["spelling"]
+        assert dialog.editors["grammar"].toPlainText() == window.ai_config.prompts["grammar"]
+        buttons = dialog.findChild(QDialogButtonBox)
+        assert buttons.button(QDialogButtonBox.StandardButton.Save).text() == save
+    finally:
+        dialog.close()
 
 
 def test_screenshot_is_saved_even_when_ocr_toggle_is_off(window):

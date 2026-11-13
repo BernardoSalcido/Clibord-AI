@@ -30,9 +30,13 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/Build-Windows.ps1
 
 El script genera `dist/windows/ClipboardAI/ClipboardAI.exe`, que se ejecuta
 sin instalar Python. Si Inno Setup 6 está disponible, también genera
-`dist/windows/ClipboardAI-0.6.0-Setup.exe`. La compilación de PyInstaller es
+`dist/windows/ClipboardAI-0.6.2-Setup.exe`. La compilación de PyInstaller es
 específica de Windows: compílala en Windows. El instalador no borra los datos
 de vinculación en `%LOCALAPPDATA%\ClipboardAI` al desinstalar.
+Antes de crear el instalador, el script comprueba que el paquete no incluya
+claves, certificados personales, códigos de vinculación, ajustes de usuario ni
+bases de datos. Los certificados CA públicos requeridos por Python son la
+única excepción para archivos `.pem`.
 
 Para probar sin crear instalador:
 
@@ -56,7 +60,11 @@ revisa cada archivo agregado antes del primer push público.
 
 ## Publicación
 
-El código se distribuye bajo MIT. Crea un repositorio público en GitHub,
-sube el árbol auditado y publica una Release con instalador, APKs y sumas
-SHA-256. Los binarios de Qt/PySide6 tienen licencias propias; incluye sus
-avisos correspondientes en la Release.
+El código se distribuye bajo MIT en el repositorio público
+`BernardoSalcido/Clibord-AI`. Este directorio sigue siendo la copia de trabajo:
+un cambio local no llega automáticamente a GitHub. Tras cada cambio probado,
+revisa `git diff` y `git status`, crea un commit y ejecuta `git push`. Etiqueta
+las versiones comprobadas para poder volver a ellas. No subas `dist/` como
+código fuente. Una Release con instalador y APKs requiere comprobar los
+binarios, preparar una firma de publicación para Android y conservar las
+licencias de Qt/PySide6 y las demás dependencias incluidas.

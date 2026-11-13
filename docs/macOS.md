@@ -37,13 +37,13 @@ El cerebro del Mac tiene una identidad y un certificado propios. Para que Androi
 1. En el cerebro abre **Vincular teléfono** y elige una dirección alcanzable desde el Mac. En una red diferente puede ser la dirección privada de Tailscale de ese equipo, siempre que ambos estén conectados a esa red privada.
 2. En el Mac abre **Vincular cerebro** y pega **todo el bloque JSON**, incluida la huella y el código. No basta con pegar solo el código. El código vence a los cinco minutos.
 3. Comprueba que el Mac muestra **Cerebro conectado**. Copia una selección con **Control+Opción+C**: el texto debe aparecer en el dock del cerebro. Envía un texto desde el cerebro y comprueba que aparece en el dock y portapapeles del Mac.
-4. Copia una captura al portapapeles del Mac. Se guarda en Imágenes y viaja al cerebro. Si **Imagen → Markdown** está activado, el cerebro procesa la captura y devuelve el texto al portapapeles del Mac.
+4. Copia una captura al portapapeles del Mac. Se guarda en Imágenes y viaja al cerebro. Si **Imagen → Texto** está activado, el cerebro procesa la captura y devuelve el texto al portapapeles del Mac.
 
 La huella del certificado TLS se comprueba **antes** de enviar el código o token. Si cambia, la conexión se rechaza. Los textos y archivos pendientes permanecen en el dock local y se reintentan al recuperar la conexión.
 
 ## Permisos y atajos
 
-Los atajos globales predeterminados en Mac son **Control+Opción+C** (copiar selección y enviar), **Control+Opción+D** (dock), **Control+Opción+O** (ortografía), **Control+Opción+I** (imagen a Markdown) y **Control+Opción+G** (gramática). Se editan en Ajustes. La tecla Control física se guarda internamente como `Meta` porque Qt llama `Ctrl` a la tecla Comando (`⌘`) en macOS. **⌘C** sigue siendo la copia normal y no lanza IA.
+Los atajos globales predeterminados en Mac son **Control+Opción+C** (copiar selección y enviar), **Control+Opción+D** (dock), **Control+Opción+O** (corrección media), **Control+Opción+I** (Imagen → Texto) y **Control+Opción+G** (corrección alta). Se editan en Ajustes. La tecla Control física se guarda internamente como `Meta` porque Qt llama `Ctrl` a la tecla Comando (`⌘`) en macOS. **⌘C** sigue siendo la copia normal y no lanza IA.
 
 Para que los atajos funcionen cuando otra aplicación está en primer plano, concede **Accesibilidad** en **Ajustes del Sistema → Privacidad y seguridad → Accesibilidad** a Terminal o a la aplicación que ejecute Clipboard AI. Cierra y vuelve a abrir la aplicación después de conceder el permiso. El Mac utiliza `NSPasteboard.changeCount` para detectar cambios del portapapeles en segundo plano.
 
