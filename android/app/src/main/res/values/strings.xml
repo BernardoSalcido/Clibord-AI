@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">Clipboard AI</string>
+    <string name="keyboard_name">Clipboard AI Keyboard</string>
+    <bool name="accept_external_drops">false</bool>
+    <string name="foreground_hint">Connect keeps the link active while the screen is locked. Pause stops it.</string>
+    <string name="dock_title">Dock · files and text</string>
+    <string name="dock_empty">Sent and received files and text will appear here.</string>
+    <string name="item_state">%1$s · %2$s</string>
+    <string name="saved">Saved</string>
+    <string name="pending">Pending</string>
+    <string name="scanner_hint">Point at the Clipboard AI QR code shown on your computer.</string>
+    <string name="scanner_camera_error">Could not open the camera. Pair by pasting the full block or entering the details.</string>
+    <string name="scanner_permission_error">Camera permission is missing. Allow it in Settings or pair without a camera.</string>
+</resources>

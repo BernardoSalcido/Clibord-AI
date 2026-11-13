@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=70"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "clipboard-ai"
+version = "0.6.0"
+description = "Local clipboard dock for Windows, Linux, macOS and Android"
+requires-python = ">=3.11"
+dependencies = ["websockets==15.0.1", "cryptography==46.0.3", "qrcode==8.2", "httpx==0.28.1"]
+
+[project.optional-dependencies]
+gui = ["PySide6-Essentials==6.12.0", "pyobjc-framework-Cocoa>=10.0; sys_platform == 'darwin'", "pyobjc-framework-Quartz>=10.0; sys_platform == 'darwin'"]
+
+[project.scripts]
+clipboard-ai = "clipboard_ai.cli:main"
+
+[project.gui-scripts]
+clipboard-ai-dock = "clipboard_ai.gui:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

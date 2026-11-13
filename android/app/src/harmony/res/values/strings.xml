@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Clipboard AI · MatePad</string>
+    <bool name="accept_external_drops">true</bool>
+</resources>

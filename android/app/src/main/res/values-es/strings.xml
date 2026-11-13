@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Clipboard AI</string>
+    <string name="item_state">%1$s · %2$s</string>
+    <string name="keyboard_name">Teclado Clipboard AI</string>
+    <string name="foreground_hint">Conectar mantiene el enlace al bloquear el móvil. Pausar lo detiene.</string>
+    <string name="dock_title">Dock · archivos y textos</string>
+    <string name="dock_empty">Los archivos y textos enviados y recibidos aparecerán aquí.</string>
+    <string name="saved">Guardado</string>
+    <string name="pending">Pendiente</string>
+    <string name="scanner_hint">Apunta al QR de Clipboard AI que muestra tu ordenador.</string>
+    <string name="scanner_camera_error">No se pudo abrir la cámara. Puedes vincular el ordenador pegando el bloque completo o introduciendo los datos.</string>
+    <string name="scanner_permission_error">La cámara no tiene permiso. Puedes autorizarla en Ajustes o vincular sin cámara.</string>
+</resources>
