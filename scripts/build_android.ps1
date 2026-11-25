@@ -22,7 +22,7 @@ if ($Check) { $taskArguments += @('testAndroidDebugUnitTest', 'testHarmonyDebugU
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 $taskOutput = Join-Path $taskRoot 'dist'
 New-Item -ItemType Directory -Path $taskOutput -Force | Out-Null
-Copy-Item -LiteralPath (Join-Path $taskRoot 'android\app\build\outputs\apk\android\debug\app-android-debug.apk') -Destination (Join-Path $taskOutput 'ClipboardAI-Android-0.3.9-debug.apk')
-Copy-Item -LiteralPath (Join-Path $taskRoot 'android\app\build\outputs\apk\harmony\debug\app-harmony-debug.apk') -Destination (Join-Path $taskOutput 'ClipboardAI-Harmony-0.3.9-debug.apk')
-Write-Host "APK Android: $taskOutput\ClipboardAI-Android-0.3.9-debug.apk"
-Write-Host "APK HarmonyOS: $taskOutput\ClipboardAI-Harmony-0.3.9-debug.apk"
+Copy-Item -LiteralPath (Join-Path $taskRoot 'android\app\build\outputs\apk\android\debug\app-android-debug.apk') -Destination (Join-Path $taskOutput 'ClipboardAI-Android-0.3.12-debug.apk')
+Copy-Item -LiteralPath (Join-Path $taskRoot 'android\app\build\outputs\apk\harmony\debug\app-harmony-debug.apk') -Destination (Join-Path $taskOutput 'ClipboardAI-Harmony-0.3.11-debug.apk')
+Write-Host "APK Android: $taskOutput\ClipboardAI-Android-0.3.12-debug.apk"
+Write-Host "APK HarmonyOS: $taskOutput\ClipboardAI-Harmony-0.3.11-debug.apk"

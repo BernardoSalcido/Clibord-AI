@@ -16,11 +16,17 @@ android {
     }
     flavorDimensions += "device"
     productFlavors {
-        create("android") { dimension = "device" }
+        create("android") {
+            dimension = "device"
+            versionCode = 17
+            versionName = "0.3.12"
+        }
         create("harmony") {
             dimension = "device"
             applicationIdSuffix = ".harmony"
             minSdk = 31
+            versionCode = 16
+            versionName = "0.3.11"
         }
     }
     compileOptions {

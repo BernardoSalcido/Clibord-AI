@@ -16,8 +16,8 @@ need native validation. The project was built with AI-assisted coding.
 | Plataforma | Estado actual |
 | --- | --- |
 | Windows | Dock y cerebro probados; ejecutable e instalador 0.6.2. |
-| Android 14 / OxygenOS | Cliente 0.3.9 probado con un OnePlus. |
-| HarmonyOS 4.3 | Cliente 0.3.9 probado con una MatePad compatible con APK Android; no implica compatibilidad con HarmonyOS NEXT. |
+| Android 14 / OxygenOS | Cliente 0.3.9 probado con un OnePlus; 0.3.12 pendiente de prueba física. |
+| HarmonyOS 4.3 | Cliente 0.3.9 probado con una MatePad compatible con APK Android; 0.3.11 pendiente de prueba física. No implica compatibilidad con HarmonyOS NEXT. |
 | macOS Apple Silicon | Código para cliente y cerebro; faltan pruebas en un Mac real. Véase [macOS](docs/macOS.md). |
 | Linux | CLI/cerebro y GUI en código; faltan pruebas en un escritorio Linux real. |
 
@@ -77,8 +77,8 @@ Abre `android/` con Android Studio o prepara el entorno local con
 ./scripts/build_android.ps1 -Check
 ```
 
-Se generan `dist/ClipboardAI-Android-0.3.9-debug.apk` y
-`dist/ClipboardAI-Harmony-0.3.9-debug.apk`. Son APK **de depuración** con una
+Se generan `dist/ClipboardAI-Android-0.3.12-debug.apk` y
+`dist/ClipboardAI-Harmony-0.3.11-debug.apk`. Son APK **de depuración** con una
 clave local que no se publica. Para distribuir actualizaciones a terceros se
 necesita una firma de publicación propia. Consulta [la guía de MatePad](docs/HarmonyOS.md).
 

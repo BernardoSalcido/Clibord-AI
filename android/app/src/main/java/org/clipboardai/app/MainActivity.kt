@@ -16,7 +16,9 @@ import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.Icon
 import android.os.Bundle
 import android.os.IBinder
+import android.os.PowerManager
 import android.net.Uri
+import android.provider.Settings
 import androidx.core.content.FileProvider
 import java.io.File
 import android.view.WindowInsets
@@ -43,22 +45,33 @@ class MainActivity : Activity() {
     private var bound = false
     private val pendingActions = mutableListOf<(DockService) -> Unit>()
     private val observer: (String) -> Unit = { status ->
-        if (!isDestroyed) { lastStatus = status; state.text = status; refresh() }
+        if (!isDestroyed) { lastStatus = status; state.text = status; refreshBackgroundStatus(); refresh() }
     }
     private val serviceBinding = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName, binder: IBinder) {
             if (!bound) return
             val service = (binder as DockService.LocalBinder).service
             dock = service
-            service.observe(observer)
-            if (!service.keepingConnection && getSharedPreferences("background", MODE_PRIVATE).getBoolean("enabled", false))
-                startConnection()
             val actions = pendingActions.toList(); pendingActions.clear()
             actions.forEach { it(service) }
+            val verifying = service.keepingConnection && !resources.getBoolean(R.bool.accept_external_drops)
+            if (verifying)
+                service.connection.reconnectOnForeground()
+            service.observe(observer)
+            if (verifying) {
+                lastStatus = tr("Verificando conexión…", "Checking connection…")
+                state.text = lastStatus
+            }
+            refreshBackgroundStatus()
+            val background = getSharedPreferences("background", MODE_PRIVATE)
+            if (!service.keepingConnection && (background.getBoolean("enabled", false) ||
+                    (!resources.getBoolean(R.bool.accept_external_drops) && background.getBoolean("auto_connect", false))))
+                startConnection()
         }
         override fun onServiceDisconnected(name: ComponentName) {
             dock?.removeObserver(observer); dock = null
             state.text = "Recuperando conexión…"
+            refreshBackgroundStatus()
         }
     }
     private lateinit var state: TextView
@@ -77,6 +90,7 @@ class MainActivity : Activity() {
     private var updatingSettings = false
     private var category = "text"
     private var lastStatus = ""
+    private var backgroundStatus: TextView? = null
     private var exportId: String? = null
     private var refreshGeneration = 0
     private val thumbnails = object : LruCache<String, Bitmap>(8 * 1024 * 1024) {
@@ -131,6 +145,19 @@ class MainActivity : Activity() {
         statusCard.addView(state)
         deviceNames = TextView(this).apply { text = tr("Cerebro sin conexión", "Brain disconnected"); textSize = 13f }
         statusCard.addView(deviceNames)
+        if (resources.getBoolean(R.bool.accept_external_drops)) {
+            backgroundStatus = TextView(this).apply {
+                textSize = 13f
+                setPadding(0, dp(8), 0, 0)
+                setOnClickListener {
+                    if (getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(packageName))
+                        backgroundHelp()
+                    else openBatterySettings(true)
+                }
+            }
+            statusCard.addView(backgroundStatus)
+            refreshBackgroundStatus()
+        }
         root.addView(statusCard, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(8) })
         compactPanel = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         root.addView(compactPanel)
@@ -219,6 +246,10 @@ class MainActivity : Activity() {
         root.addView(actionsScroll, LinearLayout.LayoutParams(-1, 0, 1f))
         detailsPanel = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; visibility = View.GONE }
         detailsPanel.addView(TextView(this).apply { text = tr("Tu dock", "Your dock"); textSize = 20f; setPadding(0, dp(12), 0, dp(6)) })
+        if (resources.getBoolean(R.bool.accept_external_drops)) detailsPanel.addView(TextView(this).apply {
+            text = tr("Mantén pulsado un elemento y arrástralo a SuperHub", "Long-press an item and drag it to SuperHub")
+            textSize = 12f; setTextColor(foregroundColor); alpha = 0.75f
+        })
         val categories = LinearLayout(this)
         listOf(tr("Textos", "Text") to "text", tr("Imágenes", "Images") to "image", tr("Archivos", "Files") to "file").forEach { (label, value) ->
             categories.addView(button(label) { category = value; updateCategoryButtons(); refresh() }.also { categoryButtons[value] = it },
@@ -239,6 +270,7 @@ class MainActivity : Activity() {
         if (service != null) action(service) else pendingActions.add(action)
     }
     private fun startConnection() {
+        state.text = tr("Conectando…", "Connecting…")
         if (android.os.Build.VERSION.SDK_INT >= 33 &&
             checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), NOTIFICATION_REQUEST)
@@ -301,21 +333,45 @@ class MainActivity : Activity() {
     }
     private fun backgroundHelp() {
         val harmony = resources.getBoolean(R.bool.accept_external_drops)
+        val batteryAllowed = getSystemService(PowerManager::class.java)
+            .isIgnoringBatteryOptimizations(packageName)
         val explanation = if (harmony) tr(
-            "En la MatePad abre Ajustes y busca «Inicio de aplicaciones». En Clipboard AI desactiva «Gestionar automáticamente» y activa «Inicio automático», «Inicio secundario» y «Ejecutar en segundo plano». Busca también «Optimización de batería» y permite que Clipboard AI funcione sin optimización. Mantén activa la notificación de conexión. Huawei puede suspender la red aun con la notificación visible; el dock reintentará conectar cuando la red vuelva.",
-            "On the MatePad, open Settings and search for ‘App launch’. Disable ‘Manage automatically’ for Clipboard AI and enable ‘Auto-launch’, ‘Secondary launch’, and ‘Run in background’. Also search for ‘Battery optimization’ and allow Clipboard AI to run without optimization. Keep the connection notification enabled. Huawei may still suspend network access; the dock retries when the network returns.")
+            "Batería: ${if (batteryAllowed) "permitida" else "restringida"}. Esta app no puede leer el ajuste «Inicio de aplicaciones» de Huawei. En Ajustes, busca «Inicio de aplicaciones», desactiva «Gestionar automáticamente» para Clipboard AI y activa «Inicio automático», «Inicio secundario» y «Ejecutar en segundo plano». Después vuelve aquí: el estado de batería se actualizará.",
+            "Battery: ${if (batteryAllowed) "allowed" else "restricted"}. This app cannot read Huawei’s ‘App launch’ setting. In Settings, search for ‘App launch’, disable ‘Manage automatically’ for Clipboard AI, then enable ‘Auto-launch’, ‘Secondary launch’, and ‘Run in background’. Return here to refresh the battery status.")
         else tr(
             "Pulsa Conectar para mantener el enlace al bloquear el móvil. Puedes detenerlo con Pausar, aquí o en la notificación. Mantener la conexión consume batería.\n\nPara recibir sin retrasos tras mucho tiempo de reposo, permite que Clipboard AI funcione sin optimización de batería. En OnePlus comprueba también que permite la actividad en segundo plano. Esta opción no permite leer automáticamente el portapapeles de otras apps.",
             "Tap Connect to keep the link active while the screen is locked. You can stop it with Pause here or in the notification. This uses battery.\n\nFor prompt delivery after long idle periods, allow Clipboard AI to run without battery optimization. On OnePlus also allow background activity. This does not enable automatic reading of other apps' clipboards.")
-        AlertDialog.Builder(this).setTitle(tr("Conexión con pantalla apagada", "Connection with screen off"))
+        AlertDialog.Builder(this).setTitle(if (harmony) tr("Permiso de segundo plano", "Background permission") else tr("Conexión con pantalla apagada", "Connection with screen off"))
             .setMessage(explanation)
-            .setPositiveButton(tr("Ajustes de batería", "Battery settings")) { _, _ ->
-                try { startActivity(Intent(android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)) }
-                catch (_: android.content.ActivityNotFoundException) {
-                    startActivity(Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                        android.net.Uri.parse("package:$packageName")))
+            .setPositiveButton(if (harmony) tr("Permitir batería", "Allow battery use") else tr("Ajustes de batería", "Battery settings")) { _, _ -> openBatterySettings(harmony && !batteryAllowed) }
+            .apply {
+                if (harmony) setNeutralButton(tr("Ajustes Huawei", "Huawei settings")) { _, _ ->
+                    startActivity(Intent(Settings.ACTION_SETTINGS))
                 }
-            }.setNegativeButton(tr("Cerrar", "Close"), null).show()
+            }
+            .setNegativeButton(tr("Cerrar", "Close"), null).show()
+    }
+    private fun refreshBackgroundStatus() {
+        val indicator = backgroundStatus ?: return
+        val allowed = getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(packageName)
+        val serviceActive = dock?.keepingConnection == true
+        indicator.text = if (allowed) tr(
+            "${if (serviceActive) "✓ Servicio en marcha" else "Servicio detenido"} · batería permitida · revisar inicio Huawei ›",
+            "${if (serviceActive) "✓ Service running" else "Service stopped"} · battery allowed · check Huawei app launch ›")
+        else tr(
+            "${if (serviceActive) "✓ Servicio en marcha" else "Servicio detenido"} · ⚠ batería restringida · configurar ›",
+            "${if (serviceActive) "✓ Service running" else "Service stopped"} · ⚠ battery restricted · configure ›")
+        indicator.setTextColor(if (allowed) accentColor else if (darkMode) Color.rgb(255, 190, 130) else Color.rgb(151, 74, 32))
+    }
+    private fun openBatterySettings(requestException: Boolean) {
+        val direct = if (requestException)
+            Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:$packageName"))
+        else Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+        try { startActivity(direct) }
+        catch (_: RuntimeException) {
+            try { startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName"))) }
+            catch (_: RuntimeException) { Toast.makeText(this, tr("Abre Ajustes y busca Clipboard AI", "Open Settings and find Clipboard AI"), Toast.LENGTH_LONG).show() }
+        }
     }
     private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
     private fun cardBackground() = GradientDrawable().apply {
@@ -733,6 +789,26 @@ class MainActivity : Activity() {
     }
     private fun canOpen(file: DockFile) = file.state == "delivered" ||
         file.direction == "out" && file.state in listOf("pending", "sending")
+    private fun startFileDrag(card: View, file: DockFile): Boolean {
+        if (!canOpen(file)) return false
+        val source = File(file.path)
+        if (!source.isFile) {
+            state.text = tr("El archivo todavía no está disponible", "The file is not available yet")
+            return true
+        }
+        return try {
+            val name = file.item.optString("name").ifEmpty { source.name }
+            val uri = FileProvider.getUriForFile(this, "$packageName.files", source, name)
+            val clip = ClipData.newUri(contentResolver, name, uri)
+            if (!card.startDragAndDrop(clip, View.DragShadowBuilder(card), null,
+                    View.DRAG_FLAG_GLOBAL or View.DRAG_FLAG_GLOBAL_URI_READ))
+                state.text = tr("No se pudo iniciar el arrastre", "Could not start dragging")
+            true
+        } catch (_: RuntimeException) {
+            state.text = tr("No se pudo compartir este archivo", "Could not share this file")
+            true
+        }
+    }
     private fun imageCard(file: DockFile): LinearLayout {
         val card = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL; gravity = android.view.Gravity.CENTER_VERTICAL; setPadding(dp(6), dp(4), dp(6), dp(4))
@@ -754,6 +830,8 @@ class MainActivity : Activity() {
         card.addView(summary, LinearLayout.LayoutParams(0, -2, 1f))
         card.addView(button("⋮") { fileOptions(file) }, LinearLayout.LayoutParams(dp(48), dp(48)))
         card.setOnClickListener { if (canOpen(file)) openFile(file, false) else fileOptions(file) }
+        if (resources.getBoolean(R.bool.accept_external_drops))
+            card.setOnLongClickListener { startFileDrag(card, file) }
         card.layoutParams = LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(4) }
         return card
     }
@@ -792,6 +870,8 @@ class MainActivity : Activity() {
         card.addView(summary, LinearLayout.LayoutParams(0, -2, 1f))
         card.addView(button("⋮") { fileOptions(file) }, LinearLayout.LayoutParams(dp(48), dp(48)))
         card.setOnClickListener { if (canOpen(file)) openFile(file, false) else fileOptions(file) }
+        if (resources.getBoolean(R.bool.accept_external_drops))
+            card.setOnLongClickListener { startFileDrag(card, file) }
         list.addView(card, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(4) })
     }
     private fun fileOptions(file: DockFile) {
@@ -845,6 +925,10 @@ class MainActivity : Activity() {
     override fun onStart() {
         super.onStart()
         bound = bindService(Intent(this, DockService::class.java), serviceBinding, BIND_AUTO_CREATE)
+    }
+    override fun onResume() {
+        super.onResume()
+        refreshBackgroundStatus()
     }
     override fun onStop() {
         getPreferences(MODE_PRIVATE).edit().putString("draft", input.text.toString()).apply()

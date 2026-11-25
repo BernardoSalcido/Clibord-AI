@@ -85,7 +85,8 @@ class DockService : Service() {
                 startForeground(NOTIFICATION, notification(), ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE)
             else startForeground(NOTIFICATION, notification())
             keepingConnection = true
-            preferences.edit().putBoolean("enabled", true).apply()
+            preferences.edit().putBoolean("enabled", true)
+                .putBoolean("auto_connect", !resources.getBoolean(R.bool.accept_external_drops) && connection.hasCredentials()).apply()
             if (connection.hasCredentials()) holdCpuForConnection()
             connection.connect()
             watchNetwork()
@@ -100,7 +101,10 @@ class DockService : Service() {
     private fun holdCpuForConnection() { if (!wakeLock.isHeld) wakeLock.acquire() }
 
     fun pair(data: PairingData) { pause(); connection.pair(data) }
-    fun pause() { screenshots.stop(); endForeground(); connection.disconnect() }
+    fun pause() {
+        preferences.edit().putBoolean("auto_connect", false).apply()
+        screenshots.stop(); endForeground(); connection.disconnect()
+    }
     fun setScreenshotCapture(enabled: Boolean) {
         screenshots.setEnabled(enabled)
         if (!keepingConnection) screenshots.stop()

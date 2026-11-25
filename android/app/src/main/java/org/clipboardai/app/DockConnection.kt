@@ -85,6 +85,12 @@ class DockConnection(context: Context, private val store: DockStore,
             prefs.getString("fingerprint", "")!!, null)
     }
 
+    /** Replace a possibly half-open socket when the phone UI returns to foreground. */
+    fun reconnectOnForeground() = execute {
+        if (active && !pairing && hasCredentials())
+            open(endpoint(), endpointPort(), prefs.getString("fingerprint", "")!!, null)
+    }
+
     private fun open(host: String, port: Int, fingerprint: String, code: String?) {
         stopSocket()
         connecting = true
@@ -254,7 +260,7 @@ class DockConnection(context: Context, private val store: DockStore,
         main.post { done(image, mode, pending != null) }
     }
     fun devices(done: (List<String>) -> Unit) = execute {
-        val items = org.json.JSONArray(deviceInfo)
+        val items = org.json.JSONArray(if (ready) deviceInfo else "[]")
         val labels = (0 until items.length()).map { index ->
             val item = items.getJSONObject(index)
             item.getString("name") + if (item.getBoolean("connected")) " · conectado" else " · sin conexión"
@@ -420,6 +426,7 @@ class DockConnection(context: Context, private val store: DockStore,
     fun delete(id: String) = execute { store.delete(id); status("Borrado del dock local") }
     private fun stopSocket() {
         generation++; ready = false; connecting = false; server = ""
+        deviceInfo = "[]"
         fileSupport = false; hubSupport = false; lastFileChunk = null
         socket?.cancel(); socket = null
         client?.connectionPool?.evictAll()
